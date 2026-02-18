@@ -7,13 +7,14 @@ from torch.optim import AdamW
 # LOAD PROCESSED DATA
 # =========================
 
-train_encodings = torch.load("../data/processed/train_encodings.pt")
-dev_encodings = torch.load("../data/processed/dev_encodings.pt")
-test_encodings = torch.load("../data/processed/test_encodings.pt")
+train_encodings = torch.load("../data/processed/train_encodings.pt", weights_only=False)
+dev_encodings = torch.load("../data/processed/dev_encodings.pt", weights_only=False)
+test_encodings = torch.load("../data/processed/test_encodings.pt", weights_only=False)
 
-train_labels = torch.load("../data/processed/train_labels.pt")
-dev_labels = torch.load("../data/processed/dev_labels.pt")
-test_labels = torch.load("../data/processed/test_labels.pt")
+train_labels = torch.load("../data/processed/train_labels.pt", weights_only=False)
+dev_labels = torch.load("../data/processed/dev_labels.pt", weights_only=False)
+test_labels = torch.load("../data/processed/test_labels.pt", weights_only=False)
+
 
 print("Processed data loaded successfully.")
 
