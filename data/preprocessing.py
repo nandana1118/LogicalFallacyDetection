@@ -2,6 +2,10 @@ import pandas as pd
 import joblib
 
 from sklearn.preprocessing import LabelEncoder
+from transformers import AutoTokenizer
+
+
+
 
 # =========================
 # LOAD TRAINING DATA
@@ -98,3 +102,53 @@ test_df['label_encoded'] = label_encoder.transform(test_df['updated_label'])
 print("\nTEST DATA")
 print("Shape:", test_df.shape)
 print(test_df.head())
+
+# =========================
+# TOKENIZATION
+# =========================
+
+# Load pretrained BERT tokenizer
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+print("\nTokenizer loaded successfully.")
+
+# Tokenize training text
+train_encodings = tokenizer(
+    df['source_article'].tolist(),
+    padding=True,
+    truncation=True,
+    max_length=128,
+    return_tensors="pt"
+)
+
+print("\nTraining data tokenized.")
+print("Input IDs shape:", train_encodings['input_ids'].shape)
+print("Attention mask shape:", train_encodings['attention_mask'].shape)
+
+# Tokenize dev text
+dev_encodings = tokenizer(
+    dev_df['source_article'].tolist(),
+    padding=True,
+    truncation=True,
+    max_length=128,
+    return_tensors="pt"
+)
+
+print("\nDev data tokenized.")
+print("Input IDs shape:", dev_encodings['input_ids'].shape)
+
+
+# Tokenize test text
+test_encodings = tokenizer(
+    test_df['source_article'].tolist(),
+    padding=True,
+    truncation=True,
+    max_length=128,
+    return_tensors="pt"
+)
+
+print("\nTest data tokenized.")
+print("Input IDs shape:", test_encodings['input_ids'].shape)
+
+
+

@@ -1,0 +1,5 @@
+model/trained_model/
+data/processed/
+*.pt
+__pycache__/
+*.pyc
