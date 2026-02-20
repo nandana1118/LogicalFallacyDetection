@@ -2,6 +2,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForSequenceClassification
 from torch.optim import AdamW
+from sklearn.metrics import classification_report, f1_score
+import numpy as np
 
 # =========================
 # LOAD PROCESSED DATA
@@ -9,12 +11,9 @@ from torch.optim import AdamW
 
 train_encodings = torch.load("../data/processed/train_encodings.pt", weights_only=False)
 dev_encodings = torch.load("../data/processed/dev_encodings.pt", weights_only=False)
-test_encodings = torch.load("../data/processed/test_encodings.pt", weights_only=False)
 
 train_labels = torch.load("../data/processed/train_labels.pt", weights_only=False)
 dev_labels = torch.load("../data/processed/dev_labels.pt", weights_only=False)
-test_labels = torch.load("../data/processed/test_labels.pt", weights_only=False)
-
 
 print("Processed data loaded successfully.")
 
@@ -62,15 +61,19 @@ model.to(device)
 optimizer = AdamW(model.parameters(), lr=2e-5)
 
 # =========================
+# TRAINING SETTINGS
+# =========================
+
+epochs = 4
+best_f1 = 0
+
+# =========================
 # TRAINING LOOP
 # =========================
 
-epochs = 2
-
-model.train()
-
 for epoch in range(epochs):
-    total_loss = 0
+    model.train()
+    total_train_loss = 0
 
     for batch in train_loader:
         optimizer.zero_grad()
@@ -86,18 +89,60 @@ for epoch in range(epochs):
         )
 
         loss = outputs.loss
-        total_loss += loss.item()
+        total_train_loss += loss.item()
 
         loss.backward()
         optimizer.step()
 
-    avg_loss = total_loss / len(train_loader)
+    avg_train_loss = total_train_loss / len(train_loader)
+
+    # =========================
+    # VALIDATION
+    # =========================
+
+    model.eval()
+    total_val_loss = 0
+    predictions = []
+    true_labels = []
+
+    with torch.no_grad():
+        for batch in dev_loader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["labels"].to(device)
+
+            outputs = model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                labels=labels
+            )
+
+            loss = outputs.loss
+            total_val_loss += loss.item()
+
+            logits = outputs.logits
+            preds = torch.argmax(logits, dim=1)
+
+            predictions.extend(preds.cpu().numpy())
+            true_labels.extend(labels.cpu().numpy())
+
+    avg_val_loss = total_val_loss / len(dev_loader)
+    macro_f1 = f1_score(true_labels, predictions, average="macro")
+
     print(f"\nEpoch {epoch+1}/{epochs}")
-    print("Average Training Loss:", avg_loss)
+    print(f"Training Loss: {avg_train_loss:.4f}")
+    print(f"Validation Loss: {avg_val_loss:.4f}")
+    print(f"Validation Macro F1: {macro_f1:.4f}")
+
+    # Save best model
+    if macro_f1 > best_f1:
+        best_f1 = macro_f1
+        torch.save(model.state_dict(), "trained_model/bert_fallacy_model.pt")
+        print("Best model saved.")
 
 # =========================
-# SAVE TRAINED MODEL
+# FINAL REPORT
 # =========================
 
-torch.save(model.state_dict(), "trained_model/bert_fallacy_model.pt")
-print("\nModel saved successfully.")
+print("\nFinal Classification Report on Validation Set:")
+print(classification_report(true_labels, predictions))
