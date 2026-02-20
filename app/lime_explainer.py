@@ -1,6 +1,6 @@
 import numpy as np
 from lime.lime_text import LimeTextExplainer
-from app.utils import model, tokenizer, label_encoder
+from utils import model, tokenizer, label_encoder
 import torch
 
 class_names = list(label_encoder.classes_)
