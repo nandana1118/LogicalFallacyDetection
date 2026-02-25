@@ -3,6 +3,9 @@ from lime.lime_text import LimeTextExplainer
 from utils import model, tokenizer, label_encoder
 import torch
 
+import string
+from nltk.corpus import stopwords
+
 class_names = list(label_encoder.classes_)
 explainer = LimeTextExplainer(class_names=class_names)
 
@@ -36,14 +39,25 @@ def explain_text(text, predicted_label):
     explanation = explainer.explain_instance(
         text,
         predict_proba,
-        num_features=6,
+        num_features=8,
         num_samples=100,
         labels=[predicted_class]
     )
 
     word_scores = explanation.as_list(label=predicted_class)
 
-    # Keep only positive contributions
-    positive_words = [(word, score) for word, score in word_scores if score > 0]
+    stop_words = set(stopwords.words("english"))
 
-    return positive_words
+    filtered_words = []
+
+    for word, score in word_scores:
+        word_clean = word.lower().strip(string.punctuation)
+
+        if (
+            score > 0.08 and                # keep only strong contributions
+            word_clean not in stop_words and
+            len(word_clean) > 2             # remove short tokens
+        ):
+            filtered_words.append((word_clean, score))
+
+    return filtered_words[:5]

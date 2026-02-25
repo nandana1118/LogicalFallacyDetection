@@ -63,9 +63,24 @@ def predict_fallacy(text):
         logits = outputs.logits
         probs = torch.softmax(logits, dim=1)
 
-    predicted_class = torch.argmax(probs, dim=1).item()
-    confidence = probs[0][predicted_class].item()
+    # Convert probabilities to numpy array
+    probabilities = probs.detach().cpu().numpy()[0]
 
-    label = label_encoder.inverse_transform([predicted_class])[0]
+    # Sort probabilities in descending order
+    sorted_indices = probabilities.argsort()[::-1]
 
-    return label, confidence
+    top_idx = sorted_indices[0]
+    second_idx = sorted_indices[1]
+
+    top_prob = probabilities[top_idx]
+    second_prob = probabilities[second_idx]
+
+    margin = top_prob - second_prob
+
+    # UPDATED Decision rule (slightly less strict)
+    if top_prob < 0.50 or margin < 0.10:
+        return "No strong fallacy detected", float(top_prob)
+
+    predicted_label = label_encoder.inverse_transform([top_idx])[0]
+
+    return predicted_label, float(top_prob)
