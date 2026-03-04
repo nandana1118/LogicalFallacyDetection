@@ -52,7 +52,7 @@ def predict_fallacy(text):
         text,
         padding=True,
         truncation=True,
-        max_length=128,
+        max_length=512,
         return_tensors="pt"
     )
 
