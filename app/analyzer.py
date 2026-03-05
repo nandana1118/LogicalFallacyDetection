@@ -1,43 +1,80 @@
 import nltk
+import re
+
 from utils import predict_fallacy
 from explanation_generator import generate_explanation
 from lime_explainer import explain_text
 
 
-def generate_spans(sentences, max_span=3):
-    spans = []
-
-    n = len(sentences)
-
-    for size in range(1, min(max_span, n) + 1):
-        for i in range(n - size + 1):
-            span = " ".join(sentences[i:i + size]).strip()
-            spans.append((i, i + size - 1, span))
-
-    return spans
+def clean_text(text):
+    """
+    Fix common formatting problems that break sentence tokenization.
+    Example: 'economics.Either' -> 'economics. Either'
+    """
+    text = re.sub(r'\.(?=[A-Z])', '. ', text)
+    return text
 
 
 def analyze_text(text):
 
+    text = clean_text(text)
+
     sentences = nltk.sent_tokenize(text)
 
-    spans = generate_spans(sentences)
+    # Step 1: classify each sentence
+    sentence_predictions = []
 
-    detected = []
+    for sentence in sentences:
 
-    for start, end, span_text in spans:
+        sentence = sentence.strip()
 
-        label, confidence = predict_fallacy(span_text)
-
-        if label == "No strong fallacy detected":
+        if sentence == "":
             continue
 
-        explanation = generate_explanation(label)
-        lime_words = explain_text(span_text, label)
+        label, confidence = predict_fallacy(sentence)
 
-        detected.append({
-            "start": start,
-            "end": end,
+        sentence_predictions.append({
+            "text": sentence,
+            "label": label,
+            "confidence": confidence
+        })
+
+    # Step 2: merge consecutive sentences with same fallacy
+    merged_results = []
+
+    i = 0
+    n = len(sentence_predictions)
+
+    while i < n:
+
+        current = sentence_predictions[i]
+
+        label = current["label"]
+
+        span_text = current["text"]
+
+        confidence = current["confidence"]
+
+        j = i + 1
+
+        # merge consecutive sentences with same label
+        while j < n and sentence_predictions[j]["label"] == label:
+
+            span_text += " " + sentence_predictions[j]["text"]
+
+            confidence = max(confidence, sentence_predictions[j]["confidence"])
+
+            j += 1
+
+        # generate explanation only if fallacy exists
+        if label == "No strong fallacy detected":
+            explanation = None
+            lime_words = None
+        else:
+            explanation = generate_explanation(label)
+            lime_words = explain_text(span_text, label)
+
+        merged_results.append({
             "text": span_text,
             "label": label,
             "confidence": confidence,
@@ -45,35 +82,6 @@ def analyze_text(text):
             "lime_words": lime_words
         })
 
-    # If nothing detected return paragraph as normal text
-    if not detected:
-        return [{
-            "text": text,
-            "label": "No strong fallacy detected",
-            "confidence": None,
-            "explanation": None,
-            "lime_words": None
-        }]
+        i = j
 
-    # Sort by sentence order
-    detected = sorted(detected, key=lambda x: x["start"])
-
-    final_results = []
-    used = set()
-
-    for d in detected:
-
-        overlap = False
-
-        for i in range(d["start"], d["end"] + 1):
-            if i in used:
-                overlap = True
-                break
-
-        if not overlap:
-            final_results.append(d)
-
-            for i in range(d["start"], d["end"] + 1):
-                used.add(i)
-
-    return final_results
+    return merged_results
