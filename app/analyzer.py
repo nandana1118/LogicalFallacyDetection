@@ -71,7 +71,7 @@ def analyze_text(text):
             explanation = None
             lime_words = None
         else:
-            explanation = generate_explanation(label)
+            explanation = generate_explanation(span_text, label)
             lime_words = explain_text(span_text, label)
 
         merged_results.append({

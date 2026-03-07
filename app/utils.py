@@ -22,7 +22,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # LOAD TOKENIZER
 # =========================
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = AutoTokenizer.from_pretrained(
+    "bert-base-uncased",
+    local_files_only=True
+)
 
 # =========================
 # LOAD MODEL
@@ -30,7 +33,8 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 model = AutoModelForSequenceClassification.from_pretrained(
     "bert-base-uncased",
-    num_labels=13
+    num_labels=13,
+    local_files_only=True
 )
 
 model.load_state_dict(torch.load(MODEL_PATH, weights_only=False))
