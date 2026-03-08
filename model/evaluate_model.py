@@ -49,3 +49,26 @@ print(f"F1-score:  {f1:.4f}")
 
 print("\nDetailed Classification Report:")
 print(classification_report(y_true, y_pred, target_names=label_encoder.classes_))
+
+# Confusion Matrix
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+cm = confusion_matrix(y_true, y_pred)
+
+plt.figure(figsize=(10,8))
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=label_encoder.classes_,
+    yticklabels=label_encoder.classes_
+)
+
+plt.xlabel("Predicted Label")
+plt.ylabel("True Label")
+plt.title("Confusion Matrix for Fallacy Classification")
+
+plt.show()
