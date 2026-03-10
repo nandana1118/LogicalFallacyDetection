@@ -8,14 +8,36 @@ from article_extractor import extract_article_text
 # -------------------------------
 def display_results(results):
 
+    color_map = {
+        "ad hominem": "#d62728",
+        "false dilemma": "#1f77b4",
+        "ad populum": "#ff7f0e",
+        "false causality": "#9467bd",
+        "faulty generalization": "#2ca02c",
+        "appeal to emotion": "#e377c2",
+        "circular reasoning": "#8c564b",
+        "equivocation": "#17becf",
+        "fallacy of credibility": "#bcbd22",
+        "fallacy of extension": "#7f7f7f",
+        "fallacy of logic": "#aec7e8",
+        "fallacy of relevance": "#ffbb78",
+        "intentional": "#ff9896"
+    }
+
     fallacy_count = sum(
         1 for r in results if r["label"] != "No strong fallacy detected"
     )
 
     total_units = len(results)
 
+        # Replace the score calculation with this:
     if total_units > 0:
-        score = int(((total_units - fallacy_count) / total_units) * 100)
+        fallacy_weight = sum(
+            r["confidence"] for r in results if r["label"] != "No strong fallacy detected"
+        )
+        max_possible_weight = total_units  # max confidence per unit is 1.0
+        score = int(((max_possible_weight - fallacy_weight) / max_possible_weight) * 100)
+        score = max(0, score)  # prevent negative scores
     else:
         score = 100
 
@@ -33,15 +55,27 @@ def display_results(results):
     st.info(f"Assessment: **{logic_status}**")
 
     st.markdown("---")
+
+    # Fallacy summary
+    detected_fallacies = [r["label"] for r in results if r["label"] != "No strong fallacy detected"]
+
+    if detected_fallacies:
+        st.markdown("## 🔎 Fallacies Detected")
+        from collections import Counter
+        fallacy_counts = Counter(detected_fallacies)
+        for fallacy, count in fallacy_counts.most_common():
+            color = color_map.get(fallacy.lower(), "#444444")
+            st.markdown(
+                f"<span style='color:{color}; font-weight:bold'>● {fallacy}</span> — found {count} time(s)",
+                unsafe_allow_html=True
+            )
+        st.markdown("---")
+    else:
+        st.success("No fallacies detected in this text.")
+
     st.markdown("## 📄 Paragraph Analysis")
 
-    color_map = {
-        "ad hominem": "#d62728",
-        "false dilemma": "#1f77b4",
-        "ad populum": "#ff7f0e",
-        "false causality": "#9467bd",
-        "faulty generalization": "#2ca02c"
-    }
+    
 
     for result in results:
 

@@ -36,7 +36,7 @@ def extract_article_text(url):
             text = p.get_text().strip()
 
             # skip very short lines
-            if len(text) < 60:
+            if len(text) < 40:
                 continue
 
             # skip boilerplate phrases
@@ -45,8 +45,8 @@ def extract_article_text(url):
 
             cleaned_paragraphs.append(text)
 
-        # limit to first 12 paragraphs to avoid footer junk
-        article_text = " ".join(cleaned_paragraphs[:12])
+        
+        article_text = " ".join(cleaned_paragraphs)
 
         return article_text if article_text else None
 

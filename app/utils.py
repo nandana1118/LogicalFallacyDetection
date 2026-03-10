@@ -37,7 +37,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
     local_files_only=True
 )
 
-model.load_state_dict(torch.load(MODEL_PATH, weights_only=False))
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=False))
 model.to(device)
 model.eval()
 
@@ -56,7 +56,7 @@ def predict_fallacy(text):
         text,
         padding=True,
         truncation=True,
-        max_length=512,
+        max_length=128,
         return_tensors="pt"
     )
 
@@ -82,7 +82,7 @@ def predict_fallacy(text):
     margin = top_prob - second_prob
 
     # UPDATED Decision rule (slightly less strict)
-    if top_prob < 0.50 or margin < 0.10:
+    if top_prob < 0.50 or margin < 0.15:
         return "No strong fallacy detected", float(top_prob)
 
     predicted_label = label_encoder.inverse_transform([top_idx])[0]
