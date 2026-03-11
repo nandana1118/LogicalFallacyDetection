@@ -40,6 +40,8 @@ def analyze_text(text):
         })
 
     # Step 2: merge consecutive sentences with same fallacy
+    # Only merge if BOTH sentences have high confidence (>0.70)
+    # This prevents different fallacies from being lumped together
     merged_results = []
 
     i = 0
@@ -57,8 +59,11 @@ def analyze_text(text):
 
         j = i + 1
 
-        # merge consecutive sentences with same label
-        while j < n and sentence_predictions[j]["label"] == label:
+        # only merge if same label AND both confidences are high
+        while (j < n and
+               sentence_predictions[j]["label"] == label and
+               confidence > 0.70 and
+               sentence_predictions[j]["confidence"] > 0.70):
 
             span_text += " " + sentence_predictions[j]["text"]
 
