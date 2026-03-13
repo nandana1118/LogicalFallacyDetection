@@ -30,14 +30,13 @@ def display_results(results):
 
     total_units = len(results)
 
-        # Replace the score calculation with this:
     if total_units > 0:
         fallacy_weight = sum(
             r["confidence"] for r in results if r["label"] != "No strong fallacy detected"
         )
-        max_possible_weight = total_units  # max confidence per unit is 1.0
+        max_possible_weight = total_units
         score = int(((max_possible_weight - fallacy_weight) / max_possible_weight) * 100)
-        score = max(0, score)  # prevent negative scores
+        score = max(0, score)
     else:
         score = 100
 
@@ -75,8 +74,6 @@ def display_results(results):
 
     st.markdown("## 📄 Paragraph Analysis")
 
-    
-
     for result in results:
 
         sentence = result["text"]
@@ -111,7 +108,7 @@ def display_results(results):
 # -------------------------------
 # APP UI STARTS HERE
 # -------------------------------
-st.title("LogicLens: AI Fallacy Analyzer")
+st.title("AI-Based Logical Fallacy Detector")
 st.caption("Detect logical fallacies and evaluate reasoning quality in text or news articles.")
 
 st.sidebar.title("Input Method")
@@ -131,7 +128,8 @@ if mode == "Analyze Text":
         if user_input.strip() == "":
             st.warning("Please enter valid text.")
         else:
-            results = analyze_text(user_input)
+            with st.spinner("Analyzing for logical fallacies..."):
+                results = analyze_text(user_input)
             display_results(results)
 
 # URL MODE
@@ -144,12 +142,12 @@ elif mode == "Analyze Article URL":
         if url_input.strip() == "":
             st.warning("Please enter a valid URL.")
         else:
-
-            with st.spinner("Extracting article text..."):
+            with st.spinner("Fetching article..."):
                 article_text = extract_article_text(url_input)
 
             if not article_text:
                 st.error("Could not extract article text from this URL.")
             else:
-                results = analyze_text(article_text)
+                with st.spinner("Analyzing for logical fallacies..."):
+                    results = analyze_text(article_text)
                 display_results(results)
