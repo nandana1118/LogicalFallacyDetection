@@ -1,3 +1,4 @@
+import re
 import requests
 from bs4 import BeautifulSoup
 
@@ -28,7 +29,18 @@ def extract_article_text(url):
             "sign up",
             "comment",
             "follow us",
-            "join here"
+            "join here",
+            "updated monday",
+            "updated tuesday",
+            "updated wednesday",
+            "updated thursday",
+            "updated friday",
+            "updated saturday",
+            "updated sunday",
+            "edt",
+            "est",
+            "pdt",
+            "pst"
         ]
 
         for p in paragraphs:
@@ -43,9 +55,12 @@ def extract_article_text(url):
             if any(word in text.lower() for word in blacklist):
                 continue
 
+            # skip lines that look like timestamps e.g. "Updated Sunday, March 15, 2026 • 6:54 PM EDT"
+            if re.match(r'^(updated\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)', text.lower()):
+                continue
+
             cleaned_paragraphs.append(text)
 
-        
         article_text = " ".join(cleaned_paragraphs)
 
         return article_text if article_text else None

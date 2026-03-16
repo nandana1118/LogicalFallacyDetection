@@ -2,7 +2,7 @@ import nltk
 import re
 
 from utils import predict_fallacy
-from explanation_generator import generate_explanation
+from explanation_generator import generate_explanation, verify_fallacy
 from lime_explainer import explain_text
 
 
@@ -33,6 +33,12 @@ def analyze_text(text):
 
         label, confidence = predict_fallacy(sentence)
 
+        # verify with LLaMA before accepting BERT's prediction
+        if label != "No strong fallacy detected":
+            if not verify_fallacy(sentence, label):
+                label = "No strong fallacy detected"
+                confidence = 0.0
+
         sentence_predictions.append({
             "text": sentence,
             "label": label,
@@ -40,8 +46,6 @@ def analyze_text(text):
         })
 
     # Step 2: merge consecutive sentences with same fallacy
-    # Only merge if BOTH sentences have high confidence (>0.70)
-    # This prevents different fallacies from being lumped together
     merged_results = []
 
     i = 0
@@ -59,17 +63,21 @@ def analyze_text(text):
 
         j = i + 1
 
-        # only merge if same label AND both confidences are high
-        while (j < n and
-               sentence_predictions[j]["label"] == label and
-               confidence > 0.70 and
-               sentence_predictions[j]["confidence"] > 0.70):
+        if label == "No strong fallacy detected":
+            # merge all adjacent "No strong fallacy detected" sentences together
+            while j < n and sentence_predictions[j]["label"] == "No strong fallacy detected":
+                span_text += " " + sentence_predictions[j]["text"]
+                j += 1
+        else:
+            # only merge fallacy sentences if same label AND both confidences above 0.50
+            while (j < n and
+                   sentence_predictions[j]["label"] == label and
+                   confidence > 0.50 and
+                   sentence_predictions[j]["confidence"] > 0.50):
 
-            span_text += " " + sentence_predictions[j]["text"]
-
-            confidence = max(confidence, sentence_predictions[j]["confidence"])
-
-            j += 1
+                span_text += " " + sentence_predictions[j]["text"]
+                confidence = max(confidence, sentence_predictions[j]["confidence"])
+                j += 1
 
         # generate explanation only if fallacy exists
         if label == "No strong fallacy detected":
