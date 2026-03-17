@@ -41,16 +41,16 @@ def display_results(results):
         score = 100
 
     if score >= 90:
-        logic_status = "Highly Logical"
+        logic_status = "High Quality Reasoning"
     elif score >= 70:
-        logic_status = "Mostly Logical"
+        logic_status = "Mostly Sound Reasoning"
     elif score >= 50:
         logic_status = "Questionable Reasoning"
     else:
-        logic_status = "Logically Weak"
+        logic_status = "Poor Reasoning"
 
-    st.markdown("## 🧠 Logical Health Score")
-    st.metric("Logic Score", f"{score}/100")
+    st.markdown("## Reasoning Quality Score")
+    st.metric("Reasoning Quality Score", f"{score}/100")
     st.info(f"Assessment: **{logic_status}**")
 
     st.markdown("---")

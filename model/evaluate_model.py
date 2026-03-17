@@ -13,7 +13,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
     num_labels=13
 )
 
-model.load_state_dict(torch.load("trained_model/bert_fallacy_model.pt", weights_only=False))
+model.load_state_dict(torch.load("trained_model/bert_fallacy_model.pt", map_location=device, weights_only=False))
 model.to(device)
 model.eval()
 
