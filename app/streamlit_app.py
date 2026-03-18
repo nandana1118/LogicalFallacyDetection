@@ -2,6 +2,10 @@ import streamlit as st
 from analyzer import analyze_text
 from article_extractor import extract_article_text
 
+# -------------------------------
+# PAGE CONFIG - collapsed sidebar
+# -------------------------------
+st.set_page_config(initial_sidebar_state="collapsed")
 
 # -------------------------------
 # RESULT DISPLAY FUNCTION
@@ -35,7 +39,7 @@ def display_results(results):
             r["confidence"] for r in results if r["label"] != "No strong fallacy detected"
         )
         max_possible_weight = total_units
-        score = int(((max_possible_weight - fallacy_weight) / max_possible_weight) * 100)
+        score = round(((max_possible_weight - fallacy_weight) / max_possible_weight) * 100, 2)
         score = max(0, score)
     else:
         score = 100
@@ -55,7 +59,6 @@ def display_results(results):
 
     st.markdown("---")
 
-    # Fallacy summary
     detected_fallacies = [r["label"] for r in results if r["label"] != "No strong fallacy detected"]
 
     if detected_fallacies:
